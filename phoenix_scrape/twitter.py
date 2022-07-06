@@ -33,3 +33,21 @@ def get_user_tweets(client: tweepy.Client, twitter_id: str, num_items: int) -> t
             client.get_users_tweets, max_results=100, id=twitter_id
     ).flatten(num_items):
         yield tweet
+
+
+@task
+def scrape_twitter():
+    logger = prefect.context.get("logger")
+    client = get_client()
+    logger.info("Got a client")
+    # DEBUG code to pull one tweet
+    tweets = get_user_tweets(client, "3476266396", 1)
+    tweets_json = [tweet._json for tweet in tweets]
+    logger.info(tweets_json)
+
+
+if __name__ == "__main__":
+    flow = Flow("scrape_twitter", tasks=[scrape_twitter])
+    flow.register(project_name="phoenix-scrape")
+    logging.info("successfully registered a flow client")
+    scrape_twitter.run()
